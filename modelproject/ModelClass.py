@@ -38,14 +38,20 @@ class MalthusModel():
 
 
         # Model parameters
-        val.alpha = 0.5
+        val.alpha = 0.15
+        val.beta = 0.3
+        val.small_lambda = 0.4
+        val.tau = 0.25
+        val.mu = 0.45
+        val.eta = ((1 - val.beta) / val.small_lambda) * (1 - val.tau)
+
+        # Model settings
+        val.T = 400
+
+        # Initial values
+        val.L0 = 1
         val.technology = 1
         val.land = 1
-        val.beta = 0.5
-        val.small_lambda = 0.5
-        val.tau = 0.2
-        val.mu = 0.5
-        val.L0 = 1
 
 
 
@@ -74,6 +80,16 @@ class MalthusModel():
         return lss
     
 
+    def symbolic_ss_L_lambdify(self):
+        
+        # Access model parameters
+        par = self.par
+
+        # Return a lambdified version of the symbolic math - turned into a python function
+        return sm.lambdify((par.technology, par.land, par.alpha, par.mu, par.eta), self.symbolic_ss_L(), 'numpy')
+
+
+
     def symbolic_y(self, L_ss):
 
         # Access model parameters
@@ -98,6 +114,17 @@ class MalthusModel():
 
         return y_ss
 
+    def symbolic_ss_y_lambdify(self):
+
+        # Access model parameters
+        par = self.par
+
+        # Get symbolic math for the output pr. worker steady state expression
+        symbolic_y = self.symbolic_ss_y()
+
+        # Return a lambdified version of the symbolic math - turned into a python function
+        return sm.lambdify((par.technology, par.land, par.alpha, par.mu, par.eta), symbolic_y, 'numpy')
+
 
 
     # Model equations for numerical solution
@@ -107,14 +134,14 @@ class MalthusModel():
         return ( L_t**(1 - alpha) )*(A*X)**alpha
 
 
-    def n_t(self, L_t, Y_t, beta, small_lambda, tau):
-        # Birth rate equation
-        return (1 - beta) / (small_lambda) * (Y_t/L_t) * (1 - tau)
+    def n_t(self, L_t, Y_t, eta):
+        # Births pr. capita
+        return eta * (Y_t / L_t)
 
 
-    def L_t1(self, L_t, Y_t, beta, small_lambda, tau, mu):
+    def L_t1(self, L_t, Y_t, eta, mu):
         # Law of motion for the labor force
-        return self.n_t(L_t, Y_t, beta, small_lambda, tau) * L_t + (1 - mu) * L_t
+        return self.n_t(L_t, Y_t, eta) * L_t + (1 - mu) * L_t
     
 
     def y_t(self, L_t, Y_t):
@@ -139,11 +166,11 @@ class MalthusModel():
             return np.inf
 
 
-        # Finding the level of production in the economy
+        # Finding the output in the economy
         Y = self.Y_t(L_current, val.alpha, val.technology, val.land)
 
         # Finding the labor force in the next period
-        L_next = self.L_t1(L_current, Y, val.beta, val.small_lambda, val.tau, val.mu)
+        L_next = self.L_t1(L_current, Y, val.eta, val.mu)
 
         # Return the difference between the current labor force and the labor force in the next period
         return L_next - L_current
@@ -191,7 +218,69 @@ class MalthusModel():
         output_pr_worker_ss = self.y_t(labor_ss, output_ss)
 
         # Steady state birth rate
-        birth_rate_ss = self.n_t(labor_ss, output_ss, val.beta, val.small_lambda, val.tau)
+        birth_rate_ss = self.n_t(labor_ss, output_ss, val.eta)
 
         # Returning the steady state values for multiple variables in the model and the smallest residual to check if something has gone wrong with the optimization
         return labor_ss, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual
+    
+
+
+    # Simulate transition to steady state
+
+    def simulate_transition_ss(self, alpha, beta, small_lambda, tau, mu, X_shock_size, A_shock_size, X_shock_time, A_shock_time):
+
+        # Access model variables
+        val = self.val
+
+        # Update values for parameters in the model
+        val.alpha = alpha
+        val.beta = beta
+        val.small_lambda = small_lambda
+        val.tau = tau
+        val.mu = mu
+        val.eta = ((1 - val.beta) / val.small_lambda) * (1 - val.tau)
+
+
+        # Number of periods to iterate over
+        T = val.T
+
+        # Lists to store transition values in
+        L = np.zeros(T)     # Work force
+        Y = np.zeros(T)     # Output
+        y = np.zeros(T)     # Output pr. worker
+        X = np.zeros(T)     # Land
+        A = np.zeros(T)     # Technology
+        n = np.zeros(T)     # Birth rate
+        
+        # Set initial values
+        L[0] = val.L0
+        Y[0] = self.Y_t(L[0], val.alpha, val.technology, val.land)
+        y[0] = self.y_t(L[0], Y[0])
+        X[0] = val.land
+        A[0] = val.technology
+        n[0] = self.n_t(L[0], Y[0], val.eta)
+
+        # Interate over periods to create transition towards steady state
+        for t in range(1, T):
+
+            # Set values in period t
+            L[t] = self.L_t1(L[t - 1], Y[t - 1], val.eta, val.mu)
+            Y[t] = self.Y_t(L[t], val.alpha, A[t - 1], X[t - 1])
+            y[t] = self.y_t(L[t], Y[t])
+            n[t] = self.n_t(L[t], Y[t], val.alpha)
+
+            # Add shock to the amount of land
+            if X_shock_time == t: 
+                X[t] = X_shock_size
+            else:
+                X[t] = X[t - 1]
+
+            # Add shock to the technology level
+            if A_shock_time == t: 
+                A[t] = A_shock_size
+            else:
+                A[t] = A[t - 1]
+        
+        
+        return (L, Y, y, X, A, n) 
+
