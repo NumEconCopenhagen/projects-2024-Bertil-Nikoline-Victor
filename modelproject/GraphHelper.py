@@ -12,7 +12,7 @@ import ModelClass
 def transition_to_ss_plot():
     
     # Set figure
-    plt.figure(figsize=(7, 3.5))
+    plt.figure(figsize=(7, 3))
     sns.set_style("whitegrid")
     
     # Set labels

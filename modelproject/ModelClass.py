@@ -15,6 +15,8 @@ class MalthusModel():
         self.par = SimpleNamespace()
         self.val = SimpleNamespace()
 
+        self.tmp = SimpleNamespace()
+
         self.setup()
 
 
@@ -22,6 +24,7 @@ class MalthusModel():
 
         par = self.par
         val = self.val
+        tmp = self.tmp
 
         # Initial values
         par.alpha = sm.symbols('alpha')
@@ -46,7 +49,7 @@ class MalthusModel():
         val.eta = ((1 - val.beta) / val.small_lambda) * (1 - val.tau)
         
         # Growth factor (g > 1 means growth and g = 1 means stagnation in the technological level) 
-        val.g = 1.01
+        val.g = 1.02
 
         ### Model settings
         val.T = 400
@@ -55,6 +58,26 @@ class MalthusModel():
         val.L0 = 1
         val.technology = 1
         val.land = 1
+
+
+        # Temporary model parameters that are updated
+        tmp.alpha = 0.15
+        tmp.beta = 0.3
+        tmp.small_lambda = 0.4
+        tmp.tau = 0.25
+        tmp.mu = 0.45
+        tmp.eta = ((1 - val.beta) / val.small_lambda) * (1 - val.tau)
+        
+        # Growth factor (g > 1 means growth and g = 1 means stagnation in the technological level) 
+        tmp.g = 1.02
+
+        ### Model settings
+        tmp.T = 400
+
+        ### Initial values
+        tmp.L0 = 1
+        tmp.technology = 1
+        tmp.land = 1
 
 
 
@@ -159,7 +182,7 @@ class MalthusModel():
 
     # Functions to solve model numerically
 
-    def diff_between_periods(self, variable):
+    def L_diff_between_periods(self, variable):
 
         # Access model variables
         val = self.val
@@ -181,9 +204,29 @@ class MalthusModel():
 
         # Return the difference between the current labor force and the labor force in the next period
         return L_next - L_current
+    
+
+    def l_diff_between_periods(self, variable):
+
+        # Access model variables
+        val = self.val
+
+        # Setting value of the current labor force
+        l_current = variable
+
+        # Checks for edge cases, used in multi_start
+        if l_current < 0:
+            # Return a very large residual to indicate a poor solution
+            return np.inf
+
+        # Finding the labor force in the next period
+        l_next = self.l_t1(l_current, val.g, val.eta, val.alpha, val.land, val.mu)
+
+        # Return the difference between the current labor force and the labor force in the next period
+        return l_next - l_current
 
 
-    def numerical_solution_steady_state(self):
+    def numerical_solution_steady_state(self, with_A_growth = False):
 
         # Access model parameters
         par = self.par
@@ -193,7 +236,8 @@ class MalthusModel():
 
 
         # Define the bounds for the search
-        bounds = (0, 10000)  # Adjust the bounds as needed
+        # The lower bounds has been added since the initial guesses become better by not guessing too low values
+        bounds = (500, 10000)  # Adjust the bounds as needed
 
         # Number of multistarts
         num_starts = 100
@@ -210,12 +254,13 @@ class MalthusModel():
             # Generate random initial guess within the bounds
             x0 = np.random.uniform(bounds[0], bounds[1])
 
-            # Find the root
-            result = optimize.root(self.diff_between_periods, x0)
+            # Optimize using L_diff_between_periods if there is no technological growth and use l_diff_between_periods if there is technological growth
+            result = with_A_growth == True and optimize.root(self.l_diff_between_periods, x0, method="hybr") or optimize.root(self.L_diff_between_periods, x0, method="hybr")
 
             # If difference is smaller than the current difference, the update the steady state value for the labor force
             if result.x < smallest_residual:
-                smallest_residual = self.diff_between_periods(result.x)
+                smallest_residual = with_A_growth == True and self.l_diff_between_periods(result.x) or self.L_diff_between_periods(result.x)
+
                 labor_ss = result.x
 
         # Steady state output
@@ -228,24 +273,30 @@ class MalthusModel():
         birth_rate_ss = self.n_t(labor_ss, output_ss, val.eta)
 
         # Returning the steady state values for multiple variables in the model and the smallest residual to check if something has gone wrong with the optimization
-        return labor_ss, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual
-    
+        if with_A_growth:
+            return labor_ss, 0, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual
+        else:
+            return 0, labor_ss, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual
+
+
 
 
     # Simulate transition to steady state
 
-    def simulate_transition_ss(self, A_growth, shocks, alpha, beta, small_lambda, tau, mu, X_shock_size, A_shock_size, X_shock_time, A_shock_time):
+    def simulate_transition_ss(self, A_growth, shocks, g, alpha, beta, small_lambda, tau, mu, X_shock_size, A_shock_size, X_shock_time, A_shock_time):
 
         # Access model variables
+        tmp = self.tmp
         val = self.val
 
         # Update values for parameters in the model
-        val.alpha = alpha
-        val.beta = beta
-        val.small_lambda = small_lambda
-        val.tau = tau
-        val.mu = mu
-        val.eta = ((1 - val.beta) / val.small_lambda) * (1 - val.tau)
+        tmp.alpha = alpha
+        tmp.beta = beta
+        tmp.small_lambda = small_lambda
+        tmp.tau = tau
+        tmp.mu = mu
+        tmp.eta = ((1 - tmp.beta) / tmp.small_lambda) * (1 - tmp.tau)
+        tmp.g = g
 
 
         # Number of periods to iterate over
@@ -261,12 +312,12 @@ class MalthusModel():
         l = np.zeros(T)     # Workforce adjusted by technology level
         
         # Set initial values
-        L[0] = val.L0
-        X[0] = val.land
-        A[0] = val.technology
-        Y[0] = self.Y_t(L[0], val.alpha, A[0], X[0])
+        L[0] = tmp.L0
+        X[0] = tmp.land
+        A[0] = tmp.technology
+        Y[0] = self.Y_t(L[0], tmp.alpha, A[0], X[0])
         y[0] = self.y_t(L[0], Y[0])
-        n[0] = self.n_t(L[0], Y[0], val.eta)
+        n[0] = self.n_t(L[0], Y[0], tmp.eta)
         l[0] = L[0] / A[0]
 
         # Interate over periods to create transition towards steady state
@@ -279,17 +330,17 @@ class MalthusModel():
             # Checks if there is technological growth
             if A_growth == True:
                 # A growth
-                A[t] = A[t - 1]*val.g
+                A[t] = A[t - 1]*tmp.g
 
             # Set values in period t
-            L[t] = self.L_t1(L[t - 1], Y[t - 1], val.eta, val.mu)
-            Y[t] = self.Y_t(L[t], val.alpha, A[t], X[t])
+            L[t] = self.L_t1(L[t - 1], Y[t - 1], tmp.eta, tmp.mu)
+            Y[t] = self.Y_t(L[t], tmp.alpha, A[t], X[t])
 
             # Transition path when there is technological growth
             l[t] = L[t] / A[t]
 
             y[t] = self.y_t(L[t], Y[t])
-            n[t] = self.n_t(L[t], Y[t], val.eta)
+            n[t] = self.n_t(L[t], Y[t], tmp.eta)
 
             # Checks if there should be shocks to the economy
             if shocks == True:
@@ -302,4 +353,3 @@ class MalthusModel():
             
 
         return (L, Y, y, X, A, n, l) 
-
