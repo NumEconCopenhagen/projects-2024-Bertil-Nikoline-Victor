@@ -6,7 +6,33 @@ import numpy as np
 
 
 class MalthusModel():
+    """
+    A class representing the Malthusian growth model with symbolic and numerical methods.
 
+    This class models population growth and technology progress. It includes functions to:
+    - Initialize the simulation settings.
+    - Calculate stable conditions symbolically.
+    - Provide numerical solutions.
+
+    Attributes:
+    par (SimpleNamespace): A namespace for storing symbolic parameters of the model.
+    val (SimpleNamespace): A namespace for storing actual values of the model parameters.
+    tmp (SimpleNamespace): A namespace for storing temporary model parameters that are updated.
+
+    Methods:
+    __init__: Constructor for the MalthusModel class. Initializes namespaces and calls the setup method.
+    setup: Initializes the model's parameters with symbolic and actual values.
+    symbolic_L: Returns the symbolic expression for the labor force transition equation.
+    symbolic_ss_L: Solves and returns the symbolic steady state level of the labor force.
+    symbolic_ss_L_lambdify: Returns a lambdified function for the steady state labor force.
+    symbolic_y: Returns the symbolic expression for output per worker.
+    symbolic_ss_y: Solves and returns the symbolic steady state output per worker.
+    symbolic_ss_y_lambdify: Returns a lambdified function for the steady state output per worker.
+    Y_t: Calculates the production output given labor force and other parameters.
+    n_t: Calculates the births per capita given output and labor force.
+    L_t1: Calculates the next period's labor force given current labor force, output, and parameters.
+
+    """
 
     # Function for initial setup
 

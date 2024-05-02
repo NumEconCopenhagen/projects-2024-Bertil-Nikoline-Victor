@@ -10,6 +10,17 @@ import ModelClass
 
 
 def transition_to_ss_plot():
+    """
+    Generates a steady-state plot for a given model using seaborn and matplotlib. It is designed to work with a model
+    that has a 'T' attribute representing the time period.
+
+    Parameters:
+    None
+
+    Returns:
+    matplotlib.pyplot: A matplotlib pyplot object with the plot configuration set.
+                       
+    """
     
     # Set figure
     plt.figure(figsize=(7, 3))
