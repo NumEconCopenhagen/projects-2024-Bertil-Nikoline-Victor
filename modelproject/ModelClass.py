@@ -37,6 +37,9 @@ class MalthusModel():
     # Function for initial setup
 
     def __init__(self):
+        """
+        Constructor for the MalthusModel class. Initializes namespaces and calls the setup method.
+        """
 
         self.par = SimpleNamespace()
         self.val = SimpleNamespace()
@@ -47,6 +50,9 @@ class MalthusModel():
 
 
     def setup(self):
+        """
+        Initializes the model's parameters with symbolic and actual values.
+        """    
 
         par = self.par
         val = self.val
@@ -110,6 +116,9 @@ class MalthusModel():
     # Functions for symbolic math
 
     def symbolic_L(self):
+        """
+        Returns the symbolic expression for the labor force transition equation.
+        """
 
         # Access model parameters
         par = self.par
@@ -121,6 +130,9 @@ class MalthusModel():
 
 
     def symbolic_ss_L(self):
+        """
+        Solves and returns the symbolic steady state level of the labor force.
+        """
         
         # Access model parameters
         par = self.par
@@ -133,6 +145,9 @@ class MalthusModel():
     
 
     def symbolic_ss_L_lambdify(self):
+        """
+        Returns a lambdified function for the steady state labor force.
+        """
         
         # Access model parameters
         par = self.par
@@ -143,6 +158,9 @@ class MalthusModel():
 
 
     def symbolic_y(self, L_ss):
+        """
+        Returns the symbolic expression for output per worker.
+        """
 
         # Access model parameters
         par = self.par
@@ -151,6 +169,9 @@ class MalthusModel():
 
 
     def symbolic_ss_y(self):
+        """
+        Solves and returns the symbolic steady state output per worker.
+        """
 
         # Access model parameters
         par = self.par
@@ -167,6 +188,9 @@ class MalthusModel():
         return y_ss
 
     def symbolic_ss_y_lambdify(self):
+        """
+        Returns a lambdified function for the steady state output per worker.
+        """
 
         # Access model parameters
         par = self.par
@@ -182,21 +206,35 @@ class MalthusModel():
     # Model equations for numerical solution
 
     def Y_t(self, L_t, alpha, A, X):
+        """
+        Calculates the production output given labor force and other parameters.
+        """
+
         # Production function
         return ( L_t**(1 - alpha) )*(A*X)**alpha
 
 
     def n_t(self, L_t, Y_t, eta):
+        """
+        Calculates the births per capita given output and labor force.
+        """
+
         # Births pr. capita
         return eta * (Y_t / L_t)
 
 
     def L_t1(self, L_t, Y_t, eta, mu):
+        """
+        Calculates the next period's labor force given current labor force, output, and parameters.
+        """
+
         # Law of motion for the labor force
         return self.n_t(L_t, Y_t, eta) * L_t + (1 - mu) * L_t
     
 
     def y_t(self, L_t, Y_t):
+        
+
         # Production pr. labor force participant
         return Y_t / L_t
 
