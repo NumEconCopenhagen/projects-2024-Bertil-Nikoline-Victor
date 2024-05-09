@@ -233,13 +233,18 @@ class MalthusModel():
     
 
     def y_t(self, L_t, Y_t):
+        """
+        Computes the production per labor force participant.
+        """
         
-
         # Production pr. labor force participant
         return Y_t / L_t
 
     # Law of motion with technological growth
     def l_t1(self, l_t, g, eta, alpha, X, mu):
+        """
+        Adjusts the workforce for technological growth and attrition.
+        """
         # Workforce adjusted for technological growth
         return eta * ( g**(-1) ) * (l_t**(1 - alpha)) * ( X**alpha ) + ( g**(-1) )*(1 - mu)*l_t
 
@@ -247,6 +252,19 @@ class MalthusModel():
     # Functions to solve model numerically
 
     def L_diff_between_periods(self, variable):
+        """
+        Calculates the difference in labor force between the current and next period.
+
+        Parameters:
+        variable (float): The current labor force value.
+
+        Returns:
+        float: The difference between the labor force in the next period and the current labor force. 
+        If the current labor force is less than or equal to zero, it returns a large number (np.inf) to indicate an unsuitable solution.
+
+        Raises:
+        ValueError: If the input 'variable' is not a positive number.
+        """
 
         # Access model variables
         val = self.val
@@ -271,6 +289,19 @@ class MalthusModel():
     
 
     def l_diff_between_periods(self, variable):
+        """
+        Calculates the difference in the labor force between the current and next period.
+
+        Parameters:
+        variable (float): The current labor force value, which should be a non-negative number.
+
+        Returns:
+        float: The difference between the labor force in the next period and the current labor force. 
+        If the current labor force is negative, it returns a large number (np.inf) to indicate an unsuitable solution.
+
+        Raises:
+        ValueError: If the input 'variable' is not a non-negative number.
+        """
 
         # Access model variables
         val = self.val
@@ -290,7 +321,22 @@ class MalthusModel():
         return l_next - l_current
 
 
-    def numerical_solution_steady_state(self, with_A_growth = False):
+    def numerical_solution_steady_state(self, with_A_growth = False):  
+        """
+        Finds the steady state of the model numerically and handles edge cases where initial guesses might lead to non-viable solutions.
+
+        Parameters:
+        with_A_growth (bool): A flag indicating whether to account for technological growth in the calculations. Defaults to False.
+
+        Returns:
+        tuple: A tuple containing steady state values for the labor force, output, output per worker, birth rate, 
+        and the smallest residual from the optimization process. The tuple structure differs based on the 'with_A_growth' flag:
+            - If 'with_A_growth' is True, the tuple is (labor_ss, 0, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual).
+            - If 'with_A_growth' is False, the tuple is (0, labor_ss, output_ss, output_pr_worker_ss, birth_rate_ss, smallest_residual).
+
+        Raises:
+        ValueError: If the bounds for the initial guesses are not set properly or if the number of multistarts is not a positive integer.
+        """
 
         # Access model parameters
         par = self.par
@@ -348,6 +394,29 @@ class MalthusModel():
     # Simulate transition to steady state
 
     def simulate_transition_ss(self, A_growth, shocks, g, alpha, beta, small_lambda, tau, mu, X_shock_size, A_shock_size, X_shock_time, A_shock_time):
+        """
+        Simulates the transition of the economy towards a steady state over a series of periods.
+
+        Parameters:
+        A_growth (bool): Flag indicating whether there is technological growth.
+        shocks (bool): Flag indicating whether there are shocks to the economy.
+        g (float): The growth rate of technology.
+        alpha (float): Output elasticity with respect to labor.
+        beta (float): Discount factor.
+        small_lambda (float): The rate at which consumption turns into utility.
+        tau (float): Tax rate.
+        mu (float): Rate of labor leaving the workforce.
+        X_shock_size (float): The size of the shock to the amount of land.
+        A_shock_size (float): The size of the shock to the technology level.
+        X_shock_time (int): The period when the shock to land occurs.
+        A_shock_time (int): The period when the shock to technology occurs.
+
+        Returns:
+        tuple: A tuple containing arrays of the workforce (L), output (Y), output per worker (y), land (X), technology (A), birth rate (n), and workforce adjusted by technology level (l) for each period.
+
+        Raises:
+        ValueError: If any of the parameters are out of their logical or practical range.
+        """
 
         # Access model variables
         tmp = self.tmp
