@@ -15,5 +15,6 @@ The project consists of a Jyputer-notebook file (modelproject.ipynb) and two pyt
 * The project has been tested using Python 3.11.7.
 
 
-## **Dependencies:** Apart from a standard Anaconda Python 3 installation, the project requires no further installations
+## **Dependencies:** 
+* Apart from a standard Anaconda Python 3 installation, the project requires no further installations
 
