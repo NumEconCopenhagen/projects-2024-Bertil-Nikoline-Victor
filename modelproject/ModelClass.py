@@ -3,6 +3,9 @@ from scipy import optimize
 from types import SimpleNamespace
 import sympy as sm
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import ipywidgets as widgets
 
 
 class MalthusModel():
@@ -485,4 +488,154 @@ class MalthusModel():
                     A[t] = A_shock_size
             
 
-        return (L, Y, y, X, A, n, l) 
+        return (L, Y, y, X, A, n, l)
+    
+
+
+    ###########################
+    #     Transition plot     #
+    ###########################
+
+    def transition_to_ss_plot(self):
+        """
+        Generates a steady-state plot for a given model using seaborn and matplotlib. It is designed to work with a model
+        that has a 'T' attribute representing the time period.
+
+        Parameters:
+        None
+
+        Returns:
+        matplotlib.pyplot: A matplotlib pyplot object with the plot configuration set.
+                        
+        """
+        
+        # Set figure
+        plt.figure(figsize=(7, 3))
+        sns.set_style("whitegrid")
+        
+        # Set labels
+        plt.xlabel('t - period', fontsize=11)
+        plt.ylabel('Value', fontsize=11)
+
+        # Adding a custom color palette
+        custom_palette = sns.color_palette("husl", 5)
+        sns.set_palette(custom_palette)
+
+        # Set limits on the x axis
+        plt.xlim(1, self.val.T)
+
+        return plt
+    
+
+    def model_parameter_sliders(self):
+        """
+        Returns sliders to adjust the parameters in the Malthus model.
+        """   
+
+        alpha_slider = widgets.FloatSlider(min=0.0, max=1.0, step=0.01, value=self.val.alpha, description='Alpha', continuous_update=False)
+        beta_slider = widgets.FloatSlider(min=0.0, max=1.0, step=0.01, value=self.val.beta, description='Beta', continuous_update=False)
+        small_lambda_slider = widgets.FloatSlider(min=0.0, max=1.0, step=0.01, value=self.val.small_lambda, description='Lambda', continuous_update=False)
+        tau_slider = widgets.FloatSlider(min=0.0, max=1.0, step=0.01, value=self.val.tau, description='Tau', continuous_update=False)
+        mu_slider = widgets.FloatSlider(min=0.0, max=1.0, step=0.01, value=self.val.mu, description='Mu', continuous_update=False)
+
+        return (alpha_slider, beta_slider, small_lambda_slider, tau_slider, mu_slider)
+
+
+    def model_shock_sliders(self):
+        """
+        Returns sliders to add shocks to the land and technology level in the economy.
+        """
+
+        X_shock_size_slider = widgets.FloatSlider(min=0, max=5, step=0.01, value=0.8, description='X shock size', continuous_update=False)
+        X_shock_time_slider = widgets.FloatSlider(min=0.0, max=self.val.T, step=1, value=200, description='X shock time period', continuous_update=False)
+        A_shock_size_slider = widgets.FloatSlider(min=0, max=5, step=0.01, value=1.2, description='A shock size', continuous_update=False)
+        A_shock_time_slider = widgets.FloatSlider(min=0.0, max=self.val.T, step=1, value=300, description='A shock time period', continuous_update=False)
+
+        X_shock_size_slider.style = {'description_width': 'initial'} # Set the width to 'initial' (default) or a custom value
+        X_shock_size_slider.layout.width = '50%'  # Adjust the width of the slider (e.g., '50%', '500px', etc.)
+
+        X_shock_time_slider.style = {'description_width': 'initial'} # Set the width to 'initial' (default) or a custom value
+        X_shock_time_slider.layout.width = '50%'  # Adjust the width of the slider (e.g., '50%', '500px', etc.)
+
+        A_shock_size_slider.style = {'description_width': 'initial'} # Set the width to 'initial' (default) or a custom value
+        A_shock_size_slider.layout.width = '50%'  # Adjust the width of the slider (e.g., '50%', '500px', etc.)
+
+        A_shock_time_slider.style = {'description_width': 'initial'} # Set the width to 'initial' (default) or a custom value
+        A_shock_time_slider.layout.width = '50%'  # Adjust the width of the slider (e.g., '50%', '500px', etc.)
+
+        return (X_shock_size_slider, X_shock_time_slider, A_shock_size_slider, A_shock_time_slider)
+
+
+    def plot_transition_towards_ss(self, L, Y, y, n, X, A):
+        """
+        Plots to show the transition towards steady state in the Malthus economy.
+        """
+
+        # L Y plot
+        L_Y_plot = self.transition_to_ss_plot()
+        L_Y_plot.plot(L, label="L", color='blue')
+        L_Y_plot.plot(Y, label="Y", color='skyblue')
+        L_Y_plot.title('Labor force (L) and output (Y)')
+        L_Y_plot.legend(title='Series', loc='upper left')
+        L_Y_plot.show()
+
+        # y n plot
+        y_n_plot = self.transition_to_ss_plot()
+        y_n_plot.plot(y, label="y", color='blue')
+        y_n_plot.plot(n, label="n", color='skyblue')
+        y_n_plot.title('Output pr. worker (y) and birth rate (n)')
+        y_n_plot.legend(title='Series', loc='upper left')
+        y_n_plot.show()
+
+        # X A plot
+        X_A_plot = self.transition_to_ss_plot()
+        X_A_plot.plot(X, label="X", linestyle=':', alpha=0.7, linewidth=2, color='blue')
+        X_A_plot.plot(A, label="A", linestyle='-', alpha=0.7, linewidth=3, color='skyblue')
+        X_A_plot.title('Land (X) and technology (A)')
+        X_A_plot.legend(title='Series', loc='upper left')
+        X_A_plot.show()
+    
+
+    def plot_transition_towards_ss_with_g_growth(self, l, A, L, Y, n, y):
+        """
+        Plots to show the transition towards steady state in the Malthus economy with technology growth.
+        """
+
+
+        # l plot
+        l_plot = self.transition_to_ss_plot()
+        l_plot.plot(l, label="l_t", color='red')
+        l_plot.title('Workforce adjusted for technological growth (l)')
+        l_plot.legend(title='Series', loc='upper left')
+        l_plot.show()
+
+        # A plot
+        A_plot = self.transition_to_ss_plot()
+        A_plot.plot(A, label="A_t", color='green')
+        A_plot.title('Technology level (A)')
+        A_plot.legend(title='Series', loc='upper left')
+        A_plot.show()
+
+        # L Y plot
+        L_Y_plot = self.transition_to_ss_plot()
+        L_Y_plot.plot(L, label="L_t", color='blue')
+        L_Y_plot.plot(Y, label="Y_t", color='skyblue')
+        L_Y_plot.title('Labor force (L) and output (Y)')
+        L_Y_plot.legend(title='Series', loc='upper left')
+        L_Y_plot.show()
+
+        # n plot
+        n_plot = self.transition_to_ss_plot()
+        n_plot.plot(n, label="n_t", color='blue')
+        n_plot.title('Birth rate (n)')
+        n_plot.legend(title='Series', loc='upper left')
+        n_plot.show()
+
+        # y plot
+        y_plot = self.transition_to_ss_plot()
+        y_plot.plot(y, label="y_t", color='orange')
+        y_plot.title('Output pr. worker (y)')
+        y_plot.legend(title='Series', loc='upper left')
+        y_plot.show()
+
+
