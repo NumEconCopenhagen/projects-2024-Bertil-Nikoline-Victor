@@ -1,12 +1,9 @@
-# Importing the datetime module
-import datetime
+# Importing packages
+import datetime                 # Importing the datetime module
+import pandas as pd             # Import pandas
+import pandas_datareader        # Importing the pandas_datareader module
+from dstapi import DstApi       # Importing the DstApi to fetch data from the API
 
-# A wrapper for multiple APIs with a pandas interface
-# Run the below pip-commmand in your terminal to use the pandas-datareader: 
-# %pip install pandas-datareader
-
-# Importing the pandas_datareader module
-import pandas_datareader
 
 
 
@@ -39,6 +36,7 @@ def inflation_annual_US(startDate = datetime.datetime(1900,1,1), endDate = datet
 
     return inflation
 
+
 def unemployment_annual_US(startDate = datetime.datetime(1900,1,1), endDate = datetime.datetime(2024,1,1)):
     """
     Retrieves annual unemployment rate data for the United States.
@@ -69,16 +67,10 @@ def unemployment_annual_US(startDate = datetime.datetime(1900,1,1), endDate = da
 
 
 
+
 ########################
 #     Denmark Data     #
 ########################
-
-# Importing the DstApi to fetch data from the API
-# Run this in your terminal to use the DstAPi: %pip install git+https://github.com/alemartinello/dstapi
-from dstapi import DstApi
-
-# Import pandas
-import pandas as pd
 
 
 def inflation_annual_DK():
@@ -145,6 +137,7 @@ def unemployment_annual_DK(startDate = datetime.datetime(1900,1,1), endDate = da
 
 
 
+
 ######################
 #     Japan Data     #
 ######################
@@ -173,6 +166,7 @@ def inflation_annual_JPN(startDate = datetime.datetime(1900,1,1), endDate = date
     inflation = inflation.rename(columns={'FPCPITOTLZGJPN': 'Inflation_JPN'})
 
     return inflation
+
 
 def unemployment_annual_JPN(startDate = datetime.datetime(1900,1,1), endDate = datetime.datetime(2024,1,1)):
     """
