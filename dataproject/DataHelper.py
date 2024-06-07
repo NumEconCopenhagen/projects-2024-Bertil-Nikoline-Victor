@@ -2,7 +2,9 @@
 import datetime
 
 # A wrapper for multiple APIs with a pandas interface
-# Run this in your terminal to use the pandas-datareader: %pip install pandas-datareader
+# Run the below pip-commmand in your terminal to use the pandas-datareader: 
+# %pip install pandas-datareader
+
 # Importing the pandas_datareader module
 import pandas_datareader
 
