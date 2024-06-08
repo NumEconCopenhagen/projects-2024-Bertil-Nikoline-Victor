@@ -1,6 +1,8 @@
+# Importing packages
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import numpy as np
+from scipy.optimize import curve_fit
 
 
 ############################
@@ -182,9 +184,6 @@ def plot_philips_curve_static(data, column_names, title, country_names, width = 
 ###########################
 #     Exponential fit     #
 ###########################
-
-from scipy.optimize import curve_fit
-import numpy as np
 
 def calculate_exponential_fit(x: list, y: list):
     """

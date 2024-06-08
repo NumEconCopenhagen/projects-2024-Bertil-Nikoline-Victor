@@ -1,7 +1,7 @@
+# Import packages
 from types import SimpleNamespace
-
-# To use the np.abs(x).argmin() command
 import numpy as np
+
 
 class ExchangeEconomyClass:
 
@@ -155,4 +155,3 @@ class ExchangeEconomyClass:
         (x1A, x2A) = self.demand_A(price)
 
         return (price, x1A, x2A)
-

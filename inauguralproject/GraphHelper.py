@@ -1,4 +1,7 @@
+# Importing packages
 import matplotlib.pyplot as plt
+
+# Plot settings
 plt.rcParams.update({"axes.grid":True,"grid.color":"black","grid.alpha":"0.25","grid.linestyle":"--"})
 plt.rcParams.update({'font.size': 14})
 

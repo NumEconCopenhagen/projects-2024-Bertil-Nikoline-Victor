@@ -12,3 +12,4 @@ The project consists of a Jyputer-notebook file (InauguralProject2024.ipynb) and
 
 ## To run the project
 * The project has been tested using Python 3.11.7.
+* The project does not require you to install any other dependencies in order for you to run it.
