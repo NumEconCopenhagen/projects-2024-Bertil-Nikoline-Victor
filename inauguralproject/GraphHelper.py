@@ -4,6 +4,20 @@ plt.rcParams.update({'font.size': 14})
 
 
 def create_edgeworth_plot(w1bar = 1, w2bar = 1):
+    """
+    This function creates an Edgeworth Box plot for a two-good economy with two consumers (A and B).
+    
+    Parameters:
+    w1bar (float): The total endowment of good 1 in the economy. Default is 1.
+    w2bar (float): The total endowment of good 2 in the economy. Default is 1.
+    
+    Returns:
+    ax_A (matplotlib.axes.Axes): The Axes object for consumer A's plot.
+    
+    The function first creates a square plot area representing the total endowment of goods. 
+    It then sets up two coordinate systems: one for consumer A (bottom left origin) and one for consumer B (top right origin).
+    The x-axis represents good 1 and the y-axis represents good 2 for both consumers.
+    """
 
     fig = plt.figure(frameon=False,figsize=(7,7), dpi=100)
 
