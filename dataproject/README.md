@@ -19,6 +19,7 @@ The project consists of a Jyputer-notebook file (dataproject.ipynb) and two pyth
     * Command to install package: ```pip install git+https://github.com/alemartinello/dstapi```
 * We access the FRED API using the pandas-datareader package:
     * Command to install package: ```pip install pandas-datareader```
+* If the project is not able to run, you might have to install **jinja2** package, which can be done using the following command ```pip install jinja2```. We're unsure if this is completely necessary however we wanted to mention it here if you encounter any issues with it.
 
 
 ## We use the following datasources / API's in the project:
