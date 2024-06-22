@@ -9,7 +9,6 @@ class ExchangeEconomyClass:
        
         """
         Initialize an instance of the class.
-
         This method sets up the parameters for the model.
 
         Parameters:
