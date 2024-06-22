@@ -6,6 +6,19 @@
 # Import SimpleNamespace
 from types import SimpleNamespace
 
+# Import numpy
+import numpy as np
+
+# Import math
+import math
+
+# Import itertools
+import itertools
+
+# Import minimize
+from scipy.optimize import minimize
+
+
 
 def optimal_script_l_j_firms(p_j, w, par):
 
@@ -14,9 +27,11 @@ def optimal_script_l_j_firms(p_j, w, par):
     return value**(1 / (1 - par.gamma))
 
 
+
 def optimal_y_j_firms(p_j, w, par):
 
     return par.A * ( ( optimal_script_l_j_firms(p_j, w, par) )**(par.gamma) )
+
 
 
 def firm_profit(p_j, w, par):
@@ -27,26 +42,6 @@ def firm_profit(p_j, w, par):
 
     return value2
 
-
-def find_optimal_l_and_y_firms(prices, w, par):
-
-    optimal_l_array = []
-    optimal_y_array = []
-    optimal_profit_array = []
-
-    for p in prices:
-
-        l = optimal_script_l_j_firms(p, w, par)
-        y = optimal_y_j_firms(p, w, par)
-        profit = firm_profit(p, w, par)
-
-        optimal_l_array.append(l)
-        optimal_y_array.append(y)
-        optimal_profit_array.append(profit)
-
-    # Returns a tuple of optimal l, y and profit
-    return (optimal_l_array, optimal_y_array, optimal_profit_array)
-    
 
 
 def c1_optimal(l, p1, p2, w, par):
@@ -59,15 +54,137 @@ def c1_optimal(l, p1, p2, w, par):
 
 
 
-def c2_optimal(l, p2, w, par):
+def c2_optimal(l, p1, p2, w, par):
 
-    numerator = 
+    numerator = (1 - par.alpha) * ( w * l + par.T + firm_profit(p1, w, par) + firm_profit(p2, w, par) )
 
-    denominator = 
+    denominator = p2 + par.tau
 
     return numerator / denominator
 
 
 
-def find_optimal_script_l_consumers():
+def optimal_l_consumer(l, p1, p2, w, par):
+
+    c1 = c1_optimal(l, p1, p2, w, par)
+    c2 = c2_optimal(l, p1, p2, w, par)
+
+    value = math.log( (c1**par.alpha) + c2**(1 - par.alpha) ) - ( par.nu * ( l**(1 + par.epsilon) / (1 + par.epsilon) ) )
+
+    return value
+
+
+
+def script_l_to_optimize(l, params):
+
+    p1 = params.p1
+    p2 = params.p2
+    w = params.w
+
+    return -1 * optimal_l_consumer(l, p1, p2, w, params)
+
+
+
+def find_market_clearing_conditions_for_p1_p2(p1_array, p2_array, w, par):
+
+    # Create a list of all combinations of p1 and p2
+    price_combinations = list(itertools.product(p1_array, p2_array))
+
+    # Script l combinations
+    script_l1 = []
+    script_l2 = []
+    script_l_total = []
+
+    # Production (y) combinations
+    y1 = []
+    y2 = []
+
+    # Consumption
+    c1 = []
+    c2 = []
+
+
+    for (p1, p2) in price_combinations:
+        
+        #########################
+        # Find script l 1 and 2 #
+        #########################
+        script_l1.append(optimal_script_l_j_firms(p1, w, par))
+        script_l2.append(optimal_script_l_j_firms(p2, w, par))
+
+        ##################
+        # Find y 1 and 2 #
+        ##################
+        y1.append(optimal_y_j_firms(p1, w, par))
+        y2.append(optimal_y_j_firms(p2, w, par))
+
+
+        ######################
+        # Find script l star #
+        ######################
+        
+        # Initial guess
+        x0 = np.array([0])
+
+        # Bounds to ensure positive values
+        bounds = [(0.001, None)]  # x[0] and x[1] should be >= 1
+
+
+        # Perform the minimization
+        par.p1 = p1
+        par.p2 = p2
+        par.w = w
+        result = minimize(script_l_to_optimize, x0, args=(par,), method='SLSQP', bounds=bounds)
+        script_l_total.append(result.x[0])
+
+
+    ######################
+    # Find script l star #
+    ######################
+
+    for (index, l) in enumerate(script_l_total):
+
+        price1 = price_combinations[index][0]
+        price2 = price_combinations[index][1]
+
+        c1.append(c1_optimal(l, price1, price2, w, par))
+        c2.append(c2_optimal(l, price1, price2, w, par))
+
+    return (price_combinations, script_l1, script_l2, script_l_total, y1, y2, c1, c2)
+
+
+
+def find_equilibrium_prices(information):
+
+    (price_combinations, script_l1, script_l2, script_l_total, y1, y2, c1, c2) = information
+
+    p1s = []
+    p2s = []
+
+    condition1 = []
+    condition2 = []
+    condition3 = []
+
+
+    for (index, (p1, p2)) in enumerate(price_combinations):
+
+        # Check 2 market clearing conditions - Using Walras' law to find the equilibrium
+
+        condition1.append(round(c1[index] - y1[index],2))
+
+        condition2.append(round(c2[index] - y2[index], 2))
+
+        condition3.append(round(script_l_total[index] - script_l1[index] - script_l2[index], 2))
+
+        p1s.append(p1)
+        p2s.append(p2)
+
+
+    return (p1s, p2s, condition1, condition2, condition3)
+
+
+
+
+
+
 
