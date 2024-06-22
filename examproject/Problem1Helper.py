@@ -18,6 +18,9 @@ import itertools
 # Import minimize
 from scipy.optimize import minimize
 
+# Import copy
+import copy
+
 
 
 def optimal_script_l_j_firms(p_j, w, par):
@@ -36,9 +39,9 @@ def optimal_y_j_firms(p_j, w, par):
 
 def firm_profit(p_j, w, par):
 
-    value1 = ( p_j*par.A*par.gamma / w)**(1 / (1 - par.gamma))
+    value1 = ( (p_j * par.A * par.gamma) / w)**(1 / (1 - par.gamma))
 
-    value2 = (1 - par.gamma / par.gamma)*w*value1
+    value2 = ((1 - par.gamma) / par.gamma) * w * value1
 
     return value2
 
@@ -127,14 +130,14 @@ def find_market_clearing_conditions_for_p1_p2(p1_array, p2_array, w, par):
         x0 = np.array([0])
 
         # Bounds to ensure positive values
-        bounds = [(0.001, None)]  # x[0] and x[1] should be >= 1
+        bounds = [(0.0001, None)]  # x[0] and x[1] should be >= 1
 
 
         # Perform the minimization
         par.p1 = p1
         par.p2 = p2
         par.w = w
-        result = minimize(script_l_to_optimize, x0, args=(par,), method='SLSQP', bounds=bounds)
+        result = minimize(script_l_to_optimize, x0, args=(par,), method='Powell', bounds=bounds)
         script_l_total.append(result.x[0])
 
 
@@ -154,6 +157,10 @@ def find_market_clearing_conditions_for_p1_p2(p1_array, p2_array, w, par):
 
 
 
+##############
+# Question 2 #
+##############
+
 def find_equilibrium_prices(information):
 
     (price_combinations, script_l1, script_l2, script_l_total, y1, y2, c1, c2) = information
@@ -168,7 +175,8 @@ def find_equilibrium_prices(information):
 
     for (index, (p1, p2)) in enumerate(price_combinations):
 
-        # Check 2 market clearing conditions - Using Walras' law to find the equilibrium
+        # Calculating difference of all three market clearing conditions
+        # Using Walras' law to find the equilibrium
 
         condition1.append(round(c1[index] - y1[index],2))
 
@@ -183,6 +191,52 @@ def find_equilibrium_prices(information):
     return (p1s, p2s, condition1, condition2, condition3)
 
 
+
+##############
+# Question 3 #
+##############
+
+
+def consumer_utility(tau, T, script_l, p1, p2, w, par):
+
+    c1 = c1_optimal(script_l, p1, p2, w, par)
+    c2 = c2_optimal(script_l, p1, p2, w, par)
+
+    util_func = math.log((c1**par.alpha) * (c2**(1 - par.alpha))) - par.nu * ((script_l**(1 + par.epsilon)) / (1 + par.epsilon))
+
+    return util_func
+
+
+
+def SWF(U, kappa, y2_optimal, tau, T, script_l, p1, p2, w, par):
+    U = consumer_utility(tau, T, script_l, p1, p2, w, par)
+    return U - kappa*y2_optimal
+
+
+def tau_to_maximize_SWF(tau_array, script_l, y2, p1, p2, w, par):
+
+    SWF_array = []
+    T_array = []
+
+    for tau in tau_array:
+
+        parameters = copy.deepcopy(par)
+
+        parameters.tau = tau
+
+        T = tau * c2_optimal(script_l, p1, p2, w, parameters)
+        parameters.T = T
+        T_array.append(T)
+
+        U = consumer_utility(tau, T, script_l, p1, p2, w, parameters)
+        swf = SWF(U, parameters.kappa, y2, tau, T, script_l, p1, p2, w, parameters)
+
+        SWF_array.append(swf)
+    
+
+    return (tau_array, T_array, SWF_array)
+
+    return (optimal_tau, optimal_T, optimal_SWF)
 
 
 
