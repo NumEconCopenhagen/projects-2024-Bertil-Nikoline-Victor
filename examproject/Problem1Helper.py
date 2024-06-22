@@ -236,9 +236,4 @@ def tau_to_maximize_SWF(tau_array, script_l, y2, p1, p2, w, par):
 
     return (tau_array, T_array, SWF_array)
 
-    return (optimal_tau, optimal_T, optimal_SWF)
-
-
-
-
 
