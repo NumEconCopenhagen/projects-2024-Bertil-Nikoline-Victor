@@ -114,8 +114,14 @@ def mean_realized_utility(array):
     return sum(utilities) / len(utilities)
 
 
-def career_distribution(array):
+def career_distribution(array, par):
 
-    
+    counter_array = [0,0,0]
 
-    return None
+    for (j, _, _) in array:
+        i = j - 1
+        counter_array[i] = counter_array[i] + 1
+
+    fractions_array = [x / par.K for x in counter_array]
+
+    return fractions_array
