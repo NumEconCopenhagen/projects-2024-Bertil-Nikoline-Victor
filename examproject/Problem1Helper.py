@@ -72,7 +72,7 @@ def optimal_l_consumer(l, p1, p2, w, par):
     c1 = c1_optimal(l, p1, p2, w, par)
     c2 = c2_optimal(l, p1, p2, w, par)
 
-    value = math.log( (c1**par.alpha) + c2**(1 - par.alpha) ) - ( par.nu * ( l**(1 + par.epsilon) / (1 + par.epsilon) ) )
+    value = math.log( (c1**par.alpha) * c2**(1 - par.alpha) ) - ( par.nu * ( l**(1 + par.epsilon) / (1 + par.epsilon) ) )
 
     return value
 
